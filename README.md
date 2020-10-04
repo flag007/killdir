@@ -8,6 +8,10 @@
 -v 输出详细信息
 ```
 
+```
+▶ cat dir.outdir.out | easywin
+```
+
 200
 ```
 ▶ cat */* | grep -oE "^200.*" | easywin
