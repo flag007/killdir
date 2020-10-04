@@ -89,7 +89,7 @@ func main() {
            `
     fmt.Println(au.Magenta(str))
   }
-	for i := 0; i < 20; i++ {
+	for i := 0; i < concurrency; i++ {
 		dirAllWG1.Add(1)
 
 		go func() {
