@@ -1,4 +1,4 @@
-# killwildcard
+# easywin
 别问 问就是不知道用来干啥的
 
 用法:
