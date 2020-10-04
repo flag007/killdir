@@ -9,7 +9,7 @@
 ```
 
 ```
-▶ cat dir.outdir.out | easywin
+▶ cat dir.out | easywin
 ```
 
 200
