@@ -1,4 +1,4 @@
-# easywin
+# killdir
 别问 问就是不知道用来干啥的
 
 用法:
@@ -9,21 +9,21 @@
 ```
 
 ```
-▶ cat dir.out | easywin
+▶ cat dir.out | killdir
 ```
 
 200
 ```
-▶ cat */* | grep -oE "^200.*" | easywin
+▶ cat */* | grep -oE "^200.*" | killdir
 ```
 
 403
 ```
-▶ cat */* | grep -oE "^403.*" | easywin
+▶ cat */* | grep -oE "^403.*" | killdir
 ```
 
 安装:
 
 ```
-▶ go get -u -v github.com/flag007/easywin
+▶ go get -u -v github.com/flag007/killdir
 ```
