@@ -12,6 +12,10 @@
 ▶ cat dir.out | killdir
 ```
 
+```
+▶ killdir -f dir.json
+```
+
 200
 ```
 ▶ cat */* | grep -oE "^200.*" | killdir
