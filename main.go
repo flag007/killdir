@@ -1,14 +1,32 @@
 package main
 
 import (
-	"flag"
-	"fmt"
-	"strings"
-	"os"
-	"sync"
-	"bufio"
 	"net/url"
+	"encoding/json"
+	"os"
+	"strings"
+	"bufio"
+	"fmt"
+	"flag"
 	"github.com/logrusorgru/aurora"
+	"sync"
+	"io/ioutil"
+)
+
+type (
+	result struct {
+		Status  int `json:"status"`
+		Length  int    `json:"length"`
+		Words   int    `json:"words"`
+		Lines   int    `json:"lines"`
+		Url     string `json:"url"`
+	}
+
+	FFUFResult struct {
+		Time string `json:"time"`
+		Results []result `json:"results"`
+	}
+
 )
 
 var au aurora.Aurora
@@ -53,8 +71,6 @@ func (sm *SafeMap) writeMap(key string) {
 
 func main() {
 	dir_dicc := newSafeMap()
-
-	sc := bufio.NewScanner(os.Stdin)
 	var dirAlls []string
 	dirAllCh1 := make(chan string)
 	var dirAllWG1 sync.WaitGroup
@@ -63,6 +79,9 @@ func main() {
 	var dirAllWG2 sync.WaitGroup
 
 	output := make(chan string)
+
+	var file string
+	flag.StringVar(&file, "f", "", "读取文件")
 
 	flag.BoolVar(&details, "v", false, "输出详情")
 
@@ -74,8 +93,7 @@ func main() {
 
 	flag.Parse()
 
-
-  if details {
+	if details {
 		str := `
     
 ▄███▄   ██      ▄▄▄▄▄ ▀▄    ▄ ▄ ▄   ▄█    ▄   
@@ -89,9 +107,9 @@ func main() {
            `
     fmt.Println(au.Magenta(str))
   }
+
 	for i := 0; i < concurrency; i++ {
 		dirAllWG1.Add(1)
-
 		go func() {
 			for dirAll := range dirAllCh1 {
 				s := strings.Fields(dirAll)
@@ -99,24 +117,42 @@ func main() {
 				if err != nil {
 					continue
 				}
-				dir_dicc.writeMap(u.Hostname()+"|"+s[1])
-				//fmt.Println(u.Hostname()+"|"+s[1])
-				//fmt.Println(u.Path)
 
+				dir_dicc.writeMap(u.Host+"|"+s[1])
+
+				//fmt.Println(u.Host+"|"+s[1])
+
+				//fmt.Println(u.Path)
 			}
 			dirAllWG1.Done()
 		}()
 	}
 
-	for sc.Scan() {
-		dirAll := strings.ToLower(sc.Text())
-		dirAllCh1 <- dirAll
-		dirAlls = append(dirAlls, dirAll)
+	var data FFUFResult
+
+	if file != "" {
+		bytes, _ := ioutil.ReadFile(file)
+		json.Unmarshal(bytes, &data)
+
+		for _, i := range data.Results {
+			dirAll := fmt.Sprintf("%-16d%-16d%s", i.Status, i.Length, i.Url)
+			dirAllCh1 <- dirAll
+			dirAlls = append(dirAlls, dirAll)
+		}
+	} else {
+		sc := bufio.NewScanner(os.Stdin)
+		for sc.Scan() {
+			dirAll := strings.ToLower(sc.Text())
+			dirAllCh1 <- dirAll
+			dirAlls = append(dirAlls, dirAll)
+		}
+
+		if err := sc.Err(); err != nil {
+			fmt.Fprintf(os.Stderr, "failed to read input: %s\n", err)
+		}
 	}
 
-	if err := sc.Err(); err != nil {
-		fmt.Fprintf(os.Stderr, "failed to read input: %s\n", err)
-	}
+
 	close(dirAllCh1)
 	dirAllWG1.Wait()
 
@@ -129,7 +165,9 @@ func main() {
 	}
 
 	var inputWG sync.WaitGroup
+
 	inputWG.Add(1)
+
 	go func(){
 		for _,dirAll := range dirAlls {
 			dirAllCh2 <- dirAll
@@ -137,10 +175,12 @@ func main() {
 		inputWG.Done()
 	}()
 
+
 	go func() {
 		inputWG.Wait()
 		close(dirAllCh2)
 	}()
+
 
 	for i := 0; i < concurrency; i++ {
 		dirAllWG2.Add(1)
@@ -152,30 +192,21 @@ func main() {
 				if err != nil {
 					continue
 				}
-				//if ok := dir_dicc.okMap(u.Hostname()+"|"+s[1]); !ok{
-				//	output <- dirAll
-				//	continue
-				//}
+
 				if u.Path == "/favicon.ico" {
 					continue
 				}
-				if u.Path ==  "/index.html" {
-					continue
-				}
-				if u.Path == "/robots.txt" {
-					continue
-				}
-				if u.Path == "/sitemap.xml" {
-					continue
-				}
-				if u.Path == "/crossdomain.xml" {
-					continue
-				}
+
 				if u.Path == "/health" {
 					continue
 				}
 
-				if  dir_dicc.readMap(u.Hostname()+"|"+s[1]) <= threshold {
+				if u.Path == "/crossdomain.xml" {
+					continue
+				}
+
+
+				if  dir_dicc.readMap(u.Host+"|"+s[1]) <= threshold {
 					output <- dirAll
 				}
 
