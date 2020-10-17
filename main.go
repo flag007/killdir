@@ -89,7 +89,7 @@ func main() {
 	flag.IntVar(&concurrency, "c", 50, "设置线程")
 
 	var threshold int
-	flag.IntVar(&threshold, "t", 20, "设置阈值")
+	flag.IntVar(&threshold, "t", 50, "设置阈值")
 
 	flag.Parse()
 
