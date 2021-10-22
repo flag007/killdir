@@ -29,5 +29,5 @@
 安装:
 
 ```
-▶ go get -u -v github.com/flag007/killdir
+▶ go install github.com/flag007/killdir@latest
 ```
